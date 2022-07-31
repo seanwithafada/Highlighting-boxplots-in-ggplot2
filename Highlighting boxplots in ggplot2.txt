@@ -1,0 +1,75 @@
+########################### Dataframe
+ID<-c()
+for (i in 1:40) {
+    ID[i]<-ifelse(i<10,paste0("ID-0",i),
+                  paste0("ID-",i))
+}
+set.seed(123)
+T1<-c(sample(11:40,40,replace=T)) # 40 measurements between 11-40
+T2<-c(11,sample(31:60,39,replace=T)) # one data point equaling 11 and 39 measurements between 31-60
+T3<-c(sample(1:20,39,replace=T),40) # 39 measurements between 1-20 and one data point equaling 40
+Factor<-c(rep(c("Low","High"),20))
+df<-data.frame(ID,Factor, T1, T2, T3)
+View(df)
+df$Factor<-ordered(df$Factor,levels=c("Low","High"))
+
+library(tidyr)
+DF<-gather(df,Time, Measure,3:5)
+
+DF$Time[DF$Time=="T1"]<-"Time 01"
+DF$Time[DF$Time=="T2"]<-"Time 02"
+DF$Time[DF$Time=="T3"]<-"Time 03"
+
+DF$Time<-as.factor(DF$Time)
+
+########################### Default (one factor)
+library(ggplot2)
+(p1<-ggplot(DF,aes(x=Time, y=Measure))+stat_boxplot(geom = "errorbar")+geom_boxplot(lwd=1,outlier.size = 3)+theme_bw()+
+      labs(x = "", y = "Measure (unit)")+ coord_cartesian(ylim=c(0,60))+scale_y_continuous(breaks=seq(0,60,5))+
+        theme(text = element_text(size=15)))
+
+########################### Highlighting a group
+library(dplyr)
+DF<-DF %>%  mutate(Highlight01 = ifelse(Time == "Time 03", "Yes", "No"))
+View(DF)
+
+windows(20,10)
+(p2<-ggplot(DF,aes(x=Time, y=Measure,fill=Highlight01))+stat_boxplot(geom = "errorbar")+geom_boxplot(lwd=1,outlier.size = 3)+
+    theme_bw()+ labs(x = "", y = "Measure (unit)")+ coord_cartesian(ylim=c(0,60))+scale_y_continuous(breaks=seq(0,60,5))+
+        theme(text = element_text(size=15))+
+    scale_fill_manual(values = c("grey","steelblue"))+
+    guides(fill = FALSE))
+
+########################### Default (two factors)
+library(ggplot2)
+(p3<-ggplot(DF,aes(x=Time, y=Measure,fill=Factor))+stat_boxplot(geom = "errorbar")+geom_boxplot(lwd=1,outlier.size = 3)+
+    theme_bw()+labs(x = "", y = "Measure (unit)")+coord_cartesian(ylim=c(0,60))+scale_y_continuous(breaks=seq(0,60,5))+
+    theme(text = element_text(size=15)))
+
+
+########################### Highlighting a group
+DF<-DF %>%  mutate(Highlight02 = ifelse(Factor=="Low" & Time == "Time 03", "Yes", "No"))
+View(DF)
+
+windows(20,10)
+(p4<-ggplot(DF,aes(x=Time, y=Measure,color=Factor,fill=Highlight02))+stat_boxplot(geom = "errorbar")+
+    geom_boxplot(lwd=1,outlier.size = 3)+theme_bw()+labs(x = "", y = "Measure (unit)")+ 
+    coord_cartesian(ylim=c(0,60))+scale_y_continuous(breaks=seq(0,60,5))+ theme(text = element_text(size=15))+
+    scale_fill_manual(values = c("grey","steelblue"))+
+    scale_color_manual(values = c("black","red"))+
+    guides(fill = FALSE))
+
+## another option
+windows(20,10)
+ggplot(DF,aes(x=Time, y=Measure,fill=Highlight02))+stat_boxplot(geom = "errorbar")+geom_boxplot(lwd=1,outlier.size = 3)+
+  theme_bw()+labs(x = "", y = "Measure (unit)")+coord_cartesian(ylim=c(0,60))+scale_y_continuous(breaks=seq(0,60,5))+
+  theme(text = element_text(size=15))+
+  facet_grid(~Factor)+theme(legend.position = "none")+
+  scale_fill_manual(values = c("grey","steelblue"))
+  
+########################### Thumbnail
+windows(20,10)
+p4+  scale_fill_manual(values = c("mediumpurple1","springgreen1"))+
+    scale_color_manual(values = c("cyan","cyan"))+ylab("") +xlab("")+
+    scale_y_continuous(breaks = NULL)+
+    theme_void()+theme(legend.position = "none")
